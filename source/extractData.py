@@ -94,6 +94,6 @@ def Smoothness(r_tb):
     r_tb_smooth = tps.transform(BetaEpsilon)
 
     # we calculate the RMSE
-    Smoothness = ellRMSE(r_tb, r_tb_smooth)
+    Smoothness = RMSE(r_tb, r_tb_smooth)
 
     return Smoothness

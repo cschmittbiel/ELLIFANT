@@ -5,6 +5,8 @@ import glob
 import sys
 import os
 
+import matplotlib.pyplot as plt
+
 from multiprocessing import Pool
 
 from ellipsoidFitting import ellipsoidFitting
@@ -12,6 +14,7 @@ from rebuildRtable import rebuildRtable
 from commandArgParser import CommandLineArgs, checkCommandLineArguments
 from cuttingTablesUp import randomPartition, stopsToPartition
 from plotRtables import plotRtable, plotRtableCompare
+from partitionGenetic import fitPartitionGenetic, generatePartition
 
 from extractData import S1
 from extractData import Q0
@@ -223,6 +226,20 @@ def main():
         # ---------------------------------------------------------
         # ------------------ BETA GENETIC ALGORITHM ---------------
         # ---------------------------------------------------------
+
+        if betaGeneticAlgorithm:
+            print("Beta genetic algorithm coming soon... (TM)")
+
+        # ---------------------------------------------------------
+        # ------------ PARTITIONING GENETIC ALGORITHM -------------
+        # ---------------------------------------------------------
+
+        if partitioningGeneticAlgorithm:
+            start = time.time()
+            fitPartitionGenetic(r_tables, beta, epsilon, nGen= 50, nIndiv=50, nEll=4)
+
+            stop = time.time()
+            print("Partitioning genetic algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 4)))
 
     except ValueError:
         print("An error occured.")
