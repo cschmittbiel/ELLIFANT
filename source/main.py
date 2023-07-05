@@ -5,15 +5,24 @@ import glob
 import sys
 import os
 
+from multiprocessing import Pool
+
 from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
 from commandArgParser import CommandLineArgs, checkCommandLineArguments
 from cuttingTablesUp import randomPartition, stopsToPartition
-from plotRtables import plotRtable
+from plotRtables import plotRtable, plotRtableCompare
+
+from extractData import S1
+from extractData import Q0
+from extractData import Qd
+from extractData import Q0_Trapezes
+from extractData import mean
+from extractData import RMSE
+from extractData import Smoothness
 
 def main():
     try:
-
         # The standard CIE angles for beta and tan epsilon :
         beta = np.array([0, 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180])    
         tanEpsilon = np.array([0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12])
@@ -56,6 +65,10 @@ def main():
 
         ignore = ignore.split(",")
         sheets = sheets.split(",")
+
+        if sheets != ["None"] and ignore != ["None"]:
+            print("Error: you can't specify both sheets and ignore, please choose one or the other")
+            sys.exit(1)
         
         stops = stops.split(",")
         stops = [int(stop) for stop in stops]
@@ -69,7 +82,7 @@ def main():
         # ----------------------------------
 
         if verbose:
-            print("Searching for data in the folder " + folderPath + "...")
+            print("Searching for data in the folder " + folderPath)
         
         #get the list of files in the folder that match the patron
         fileList = glob.glob(os.path.join(folderPath, patron))
@@ -81,6 +94,7 @@ def main():
 
         if verbose:
             print("Found " + str(len(fileList)) + " file(s).\n")
+            print("Loading the data from the files...")
 
         #load the data from the files
 
@@ -131,7 +145,7 @@ def main():
 
         # if there are no r-tables, return the info to the user and exit
         if len(r_tables) == 0:
-            print('No r-tables found in %s that match %s' % (folderPath, patron))
+            print('No r-tables found in %s that match %s /%s' % (folderPath, patron, sheets))
             return 0
         
         if verbose:
@@ -145,7 +159,10 @@ def main():
         r_tables = [r_table.to_numpy() for r_table in r_tables]
 
         #convert the stops to a partition
-        partition = randomPartition(3)
+        partition = stopsToPartition(stops)
+
+        #load the weights for the Q0 function
+        Q0_weights = pd.read_excel('Q0_weights.xlsx', header=None)
 
         if verbose:
             if ellipsoidAdjusting:
@@ -162,16 +179,51 @@ def main():
                 plotRtable(r_table, partition, beta, epsilon, name= r_tables_names[i], \
                             store=saveImages, show=showImages, style=plotStyle, verbose=verbose)
 
-        # ELLIPSOID ADJUSTING ALGORITHM
+        # ---------------------------------------------------------
+        # ------------- ELLIPSOID ADJUSTING ALGORITHM -------------
+        # ---------------------------------------------------------
 
         if ellipsoidAdjusting:
             #run the ellipsoid adjusting algorithm
+            results = np.zeros_like(r_tables)
+            data = pd.DataFrame(columns=['r-table', 'S1', 'Q0', 'Q0_trapezes', 'Qd_trapezes', \
+                                         'S1_adj', 'Q0_adj', 'Q0_trapezes_adj', 'Qd_trapezes_adj',\
+                                         'RMSE'], index=np.arange(len(r_tables)))
+
+            start = time.time()
             for i, r_table in enumerate(r_tables):
-                v = ellipsoidFitting(r_table, partition, beta, epsilon, freeConstant=True)
-                r_tb = rebuildRtable(v, partition, beta, epsilon)
-                plotRtable(r_tb, partition, beta, epsilon, name= r_tables_names[i], \
-                        store=saveImages, show=showImages, style=plotStyle, verbose=verbose)
-                
+                if verbose:
+                    print("Treating " + r_tables_names[i])
+                v = ellipsoidFitting(r_table, partition, beta, epsilon)
+                r_table_adj = rebuildRtable(v, partition, beta, epsilon, request = 'rp', verbose=False)#verbose here for debugging only
+                results[i] = r_table_adj
+
+                if 'r' in plotTypes:
+                    plotRtable(r_table_adj, partition, beta, epsilon, name= 'adjusted ' + r_tables_names[i], \
+                        store=saveImages, show=showImages, style=plotStyle, verbose=False)#"verbose here for debugging onl"
+                    
+                if 'c' in plotTypes:
+                    plotRtableCompare(r_table, r_table_adj, partition, beta, epsilon, name= 'comparing ' + r_tables_names[i], \
+                        store=saveImages, show=showImages, style=plotStyle, verbose=False)#"
+            
+                if saveData:
+                    data.iloc[i] = [r_tables_names[i], S1(r_table), Q0(r_table, Q0_weights), Q0_Trapezes(r_table), Qd(r_table,Q0_weights), \
+                                    S1(r_table_adj), Q0(r_table_adj, Q0_weights), Q0_Trapezes(r_table_adj), Qd(r_table_adj,Q0_weights), \
+                                    RMSE(r_table, r_table_adj)]
+            stop = time.time()
+            
+            if verbose:
+                print("Ellipsoid adjusting algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 2)))
+
+            if saveData:
+                if verbose:
+                    print("Saving data to " + saveFolder + "/" + saveDataName)
+                data.to_excel(os.path.join(saveFolder, folderPath.split('/')[-1] + '_' + saveDataName + '.xlsx'))
+
+        # ---------------------------------------------------------
+        # ------------------ BETA GENETIC ALGORITHM ---------------
+        # ---------------------------------------------------------
+
     except ValueError:
         print("An error occured.")
         sys.exit(1)

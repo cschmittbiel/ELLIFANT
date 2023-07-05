@@ -82,3 +82,98 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
     if show:
         plt.show()
     plt.close()
+
+#Compare plots
+def plotRtableCompare(data1, data2, partition, beta, epsilon, style='2D_side', name='r-table', savPath='../images/', store=False, show=True, verbose=False):
+
+    if verbose:
+        print('Plotting the comparison of the r-table of '+name)
+
+    plt.figure(figsize=(12,9))
+    data1.transpose()
+    data2.transpose()
+
+    if partition.shape != (29,20):
+        print('The partition array is not the right size')
+        sys.exit(1)
+
+    EpsiTable = np.repeat(epsilon,20).reshape(29,20)
+    BetaTable = np.repeat(beta*np.pi/180,29).reshape(20,29).transpose()
+
+    data1Abs = data1 * np.sin(EpsiTable) * np.cos(BetaTable)
+    data1Ord = data1 * np.sin(EpsiTable) * np.sin(BetaTable)
+    data1App = data1 * np.cos(EpsiTable)
+
+    data2Abs = data2 * np.sin(EpsiTable) * np.cos(BetaTable)
+    data2Ord = data2 * np.sin(EpsiTable) * np.sin(BetaTable)
+    data2App = data2 * np.cos(EpsiTable)
+
+    if style == '2D_side':
+        plt.title('2D side comparison of the photometric solid of '+ name)
+        plt.xlabel('r sin(epsilon) cos(beta)')
+        plt.ylabel('r cos(epsilon)')
+
+        #connect the dots along epsilon and beta with lines
+        plt.plot(data1Abs, data1App, color='black', linewidth=0.5)
+        plt.plot(data1Abs.transpose(), data1App.transpose(), color='black', linewidth=0.5)
+
+        #scatter the dots of data1 in black
+        plt.scatter(data1Abs, data1App, color='black')
+
+        #plot the dots of data2 with the right colors (in partitions)
+        for i in range(10):
+            plt.scatter(data2Abs[partition==i], data2App[partition==i], color=colors[i-1])
+
+    elif style == '2D_top':
+        plt.title('2D top comparison of the photometric solid of '+ name)
+        plt.xlabel('r sin(epsilon) cos(beta)')
+        plt.ylabel('r sin(epsilon) sin(beta)')
+
+        #connect the dots along epsilon and beta with lines
+        plt.plot(data1Abs, data1Ord, color='black', linewidth=0.5)
+        plt.plot(data1Abs, -data1Ord, color='black', linewidth=0.5)
+
+        #scatter the dots of data1 in black
+        plt.scatter(data1Abs, data1Ord, color='black')
+        plt.scatter(data1Abs, -data1Ord, color='black')
+
+        #plot the dots of data2 with the right colors (in partitions)
+        for i in range(10):
+            plt.scatter(data2Abs[partition==i], data2Ord[partition==i], color=colors[i-1])
+            plt.scatter(data2Abs[partition==i], -data2Ord[partition==i], color=colors[i-1])
+
+    elif style == '3D':
+        plt.title('3D comparison of the photometric solid of '+ name)
+        ax = plt.axes(projection='3d')
+        ax.set_xlabel('r sin(epsilon) cos(beta)')
+        ax.set_ylabel('r sin(epsilon) sin(beta)')
+        ax.set_zlabel('r cos(epsilon)')
+
+        #connect the dots along epsilon and beta with lines
+        for i in range(29):
+            ax.plot(data1Abs[i,:], data1Ord[i,:], data1App[i,:], color='black', linewidth=0.5)
+            ax.plot(data1Abs[i,:], -data1Ord[i,:], data1App[i,:], color='black', linewidth=0.5)
+        for i in range(20):
+            ax.plot(data1Abs[:,i], data1Ord[:,i], data1App[:,i], color='black', linewidth=0.5)
+            ax.plot(data1Abs[:,i], -data1Ord[:,i], data1App[:,i], color='black', linewidth=0.5)
+
+        #plot the dots of data1 in black
+        ax.scatter(data1Abs, data1Ord, data1App, color='black')
+        ax.scatter(data1Abs, -data1Ord, data1App, color='black')
+
+        #plot the dots of data2 with the right colors (in partitions)
+        for i in range(10):
+            ax.scatter(data2Abs[partition==i], data2Ord[partition==i], data2App[partition==i], color=colors[i-1])
+            ax.scatter(data2Abs[partition==i], -data2Ord[partition==i], data2App[partition==i], color=colors[i-1])
+
+    else:
+        print("The style given is not valid.")
+        sys.exit(1)
+
+    if store:
+        plt.savefig(savPath+name+'_'+style+'.png')
+    if show:
+        plt.show()
+    plt.close()
+
+    

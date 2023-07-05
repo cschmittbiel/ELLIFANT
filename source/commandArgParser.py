@@ -45,7 +45,7 @@ class CommandLineArgs:
         parser.add_argument('-i', "--ignore", required=False, type=str, default="None", help="If this argument is given, sheets with these names will be ignored. Example : W1,W2,W3")
 
         parser.add_argument('-sf',"--saveFolder", required=False, type=str, default="../results", help="The path to the folder where the results should be saved, default is the adjacent folder 'results'.")
-        parser.add_argument('-sdn',"--saveDataName", required=False, type=str, default="../results/result.xlsx", help="The name of the file where the results should be saved, without the extension.")
+        parser.add_argument('-sdn',"--saveDataName", required=False, type=str, default="results", help="The name of the file where the results should be saved, without the extension.")
         parser.add_argument('-sif',"--saveImageFolder", required=False, type=str, default="../images", help="The path to the folder where the images should be saved, default is the adjacent folder 'images'.")
 
         parser.add_argument('-ea',"--ellipsoidAdjusting", required=False, action='store_true', default=None, help="If this argument is given, the ellipsoid adjusting algorithm will be run on the data once")
@@ -79,6 +79,7 @@ class CommandLineArgs:
 
         self.showImages = self.args.showImages
         self.saveImages = self.args.saveImages
+        self.saveData = self.args.saveData
 
         self.plotStyle = self.args.plotStyle
         self.plotTypes = self.args.plotTypes
