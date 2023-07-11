@@ -17,9 +17,7 @@ from extractData import S1
 from extractData import Q0
 from extractData import Qd
 from extractData import Q0_Trapezes
-from extractData import mean
 from extractData import RMSE
-from extractData import Smoothness
 
 def main():
     try:
@@ -236,24 +234,27 @@ def main():
 
         if partitioningGeneticAlgorithm:
             start = time.time()
-            bestPartition, smallestMRMSE = fitPartitionGenetic(r_tables, beta, epsilon, nEll=genetics[0], nGen=genetics[1], nIndiv=genetics[2], verbose=verbose)
+            bestPartition, smallestMRMSE = fitPartitionGenetic(r_tables, beta, epsilon, nEll=genetics[0], nMaxGen=genetics[1], nIndiv=genetics[2], verbose=verbose)
             stop = time.time()
             if verbose:
                 print("Partitioning genetic algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 4)))
 
-            print("plotted best partition")
-            print("Best MRMSE: " + str(smallestMRMSE))
+            print("Best deltaR: " + str(smallestMRMSE))
 
-            #also write the result to a txt file (don't overwrite, use the first available line)
-            with open(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_' + str(genetics[0]) + '_bestPartition.txt'), 'a') as f:
-                f.write(str(folderPath.split('/')[-1]) + 'Best MRMSE for' + str(genetics[0]) + 'ellipsoids: ' + str(smallestMRMSE) + '\n')
+            with open(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_bestPartition.txt'), 'a') as f:
+                f.write(str(folderPath.split('/')[-1]) + ': Best deltaR for ' + str(genetics[0]) + ' ellipsoids: ' + str(smallestMRMSE) + '\n')
 
-            plt.imshow(np.array(bestPartition), cmap='gray')
+            plt.imshow(np.array(bestPartition), cmap='Set3')
             plt.title('Best partition found')
-            if saveData:
-                plt.savefig(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_' + str(genetics[0]) + '_bestPartition.png'))
+            if saveImages:
+                plt.savefig(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_' + str(genetics[0]) + '_Ellipses_bestPartition.png'))
             if showImages:
                 plt.show()
+
+            if saveData:
+                #save the partition in an xlsx file
+                pd.DataFrame(bestPartition).to_excel(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + 'bestPartitions.xlsx')\
+                                                    , header=False, index=False, sheet_name= str(genetics[0]) + '_ell')
 
     except ValueError:
         print("An error occured.")

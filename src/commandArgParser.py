@@ -155,14 +155,5 @@ def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataN
     #all arguments in genetic should be strictly positive integers
     if not all(genetic > 0 for genetic in genetics):
         print("Error: all arguments in genetic should be strictly positive integers, \
-            number of ellipsoids, number of generations, number of individuals")
+            number of ellipsoids, number of generations to survive to win, number of individuals")
         sys.exit(1)
-
-    #ERRORS THAT DON'T STOP THE PROGRAM
-
-    #if the user wants a model, set show and plot images to false, tell him if he wants verbose
-    if betaGeneticAlgorithm is not None or partitioningGeneticAlgorithm is not None:
-        showImages = False
-        saveImages = False
-        if verbose:
-            print("You selected a model, so the images will not be shown or saved to avoid clutter.")

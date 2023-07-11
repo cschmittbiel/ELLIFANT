@@ -16,9 +16,7 @@ def rebuildRtable(v, partition, beta, epsilon, rollAverages = True, request = 'n
     p = v[:,3]
     s = v[:,4]
 
-    #try to get the q and d values
-    #depending on the number of parameters, they may not be there
-    #(see how ellipses are fitted in Ellipsoidfitting.py)
+    #this clever trick allows us not to have to check if the values exist
     try:
         q = v[:,5]
         d = v[:,6]

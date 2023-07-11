@@ -75,25 +75,13 @@ def RMSE(original_Rtable, adjusted_Rtable):
 
     return RMSE
 
-from scipy.interpolate import Rbf
+def deltaQ0S1(original_Rtable, adjusted_Rtable):
+    Q = (Q0_Trapezes(original_Rtable) - Q0_Trapezes(adjusted_Rtable)) ** 2
+    S = (S1(original_Rtable) - S1(adjusted_Rtable)) ** 2
+    return np.sqrt((np.pi ** 2 * Q + S) / 2)
 
-def Smoothness(r_tb):
-    
-    r_tb = r_tb.to_numpy().flatten()
-
-    r_tb = np.array([r_tb,np.zeros(580)]).T
-
-    BetaEpsilon = np.array([[beta[i], Epsilon[j]] for i in range(0, len(beta)) for j in range(0, len(Epsilon))]) 
-
-    # we create the spline
-    tps = ThinPlateSpline(0.5)
-
-    # we fit the spline
-    tps.fit(BetaEpsilon, r_tb)
-
-    r_tb_smooth = tps.transform(BetaEpsilon)
-
-    # we calculate the RMSE
-    Smoothness = RMSE(r_tb, r_tb_smooth)
-
-    return Smoothness
+def deltaR(original_Rtable, adjusted_Rtable):
+    err = RMSE(original_Rtable, adjusted_Rtable)
+    meanO = mean(original_Rtable)
+    meanA = mean(adjusted_Rtable)
+    return 2 * err / (meanO + meanA)

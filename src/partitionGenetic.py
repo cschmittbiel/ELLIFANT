@@ -4,9 +4,9 @@ from multiprocessing import Pool
 from cuttingTablesUp import randomPartition
 from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
-from extractData import RMSE
+from extractData import deltaR
 
-def fitPartitionGenetic(r_tables, beta, epsilon, nGen, nIndiv, nEll, verbose):
+def fitPartitionGenetic(r_tables, beta, epsilon, nMaxGen, nIndiv, nEll, verbose):
 
     # Initialize population of nIndiv partitions, avoinding region overlap:
     partitions = np.array([randomPartition(nEll) for i in range(nIndiv)])
@@ -17,11 +17,24 @@ def fitPartitionGenetic(r_tables, beta, epsilon, nGen, nIndiv, nEll, verbose):
     # Initialize fitnessLogs map to store fitness values (key: partition, value: fitness)
     fitnessLogs = {}
 
-    for i in range(nGen):
-        print("Generation " + str(i+1) + " of " + str(nGen))
+    counter, reign = 0, 0
+    while reign < nMaxGen and counter < 10000:
+        counter += 1
+        print("Generation " + str(counter))
+
+        # Compute fitness of each partition
+        OldChampion = partitions[0]
         partitions = Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv)
+        Champion = partitions[0]
+
+        # Check if the best partition has changed, if not, increment the counter
+        if np.array_equal(OldChampion, Champion):
+            reign += 1
+        else :
+            reign = 1
         if verbose:
-            print("Best partition of generation " + str(i+1) + " has a MRMSE over this data of " + str(fitnessLogs[str(partitions[0])]))
+            print("Best partition of generation " + str(counter) + " has a deltaR over this data of " + \
+                  str(round(fitnessLogs[str(partitions[0])], 3)) + ", it has won the last " + str(reign) + " generations.")
 
     # Return the best partition (smaller fitness value is better)
     return partitions[0], fitnessLogs[str(partitions[0])]
@@ -118,14 +131,14 @@ def fitness(partition, fitnessLogs, r_tables, beta, epsilon, nEll):
     fitness = 0
     for r_table in r_tables:
         try:
-            v = ellipsoidFitting(r_table, partition, beta, epsilon)
+            v = ellipsoidFitting(r_table, partition, beta, epsilon)#no freeing of parameters yet
         except:
             print("Error in ellipsoid fitting")
             print("Partition: " + str(partition))
             print("Table: " + str(r_table))
             exit()
         adjustedR_table = rebuildRtable(v, partition, beta, epsilon, request='rp')
-        fitness += RMSE(r_table, adjustedR_table)
+        fitness += deltaR(r_table, adjustedR_table)
 
         #print("Fitness of partition " + str(partition.shape) + " for table " + str(r_table.shape) + " is " + str(fitness))
 
