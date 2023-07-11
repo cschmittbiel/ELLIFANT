@@ -1,0 +1,1 @@
+LCPCBest MRMSE for4ellipsoids: 19.01526417915446

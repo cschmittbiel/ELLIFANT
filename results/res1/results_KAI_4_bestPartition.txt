@@ -1,0 +1,1 @@
+KAIBest MRMSE for4ellipsoids: 101.74895969078328

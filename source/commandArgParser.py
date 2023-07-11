@@ -32,6 +32,7 @@ class CommandLineArgs:
         self.plotTypes = None
 
         #other
+        self.genetics = None
         self.stops = None
         self.verbose = None
 
@@ -56,9 +57,10 @@ class CommandLineArgs:
         parser.add_argument('-si',"--saveImages", required=False, action='store_true', help="If this argument is given, the images will be saved in the folder specified by -sf")
         parser.add_argument('-sd',"--saveData", required=False, action='store_true', help="If this argument is given, the data will be saved in the file specified by -sdn")
 
-        parser.add_argument('-ps',"--plotStyle", required=False, type=str, default="2D_side", choices=['2D_side','2D_top','3D'], help="The style of the plot, default is 2D_side, other options are 2D_top, 3D")
+        parser.add_argument('-ps',"--plotStyle", required=False, type=str, default="2D_side", choices=['2D_side','2D_top','3D','q2D_side','q2D_top','q3D'], help="The style of the plot, default is 2D_side, other options are 2D_top, 3D")
         parser.add_argument('-pt',"--plotTypes", required=False, type=str, default="", help="The types of plots to show, default is none, but input can 'o' (original table), 'r' (result), 'c' (comparison)")
 
+        parser.add_argument('-g',"--genetics", required=False, type=str, default="3,10,10", help="The parameters for the genetic algorithm, number of ellipsoids, number of generations, population size, default is 3,10,10")
         parser.add_argument('-st',"--stops", required=False, type=str, default='0,15,60,180', help="The stops for the ellipsoid adjusting algorithm, default is 0,15,60,180")
 
         parser.add_argument('-v',"--verbose", required=False, action='store_true', help="If this argument is given, the program will print more information")
@@ -84,6 +86,7 @@ class CommandLineArgs:
         self.plotStyle = self.args.plotStyle
         self.plotTypes = self.args.plotTypes
 
+        self.genetics = self.args.genetics
         self.stops = self.args.stops
         self.verbose = self.args.verbose
 
@@ -91,7 +94,7 @@ class CommandLineArgs:
     
 def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataName, \
                             plotTypes, ellipsoidAdjusting, betaGeneticAlgorithm, partitioningGeneticAlgorithm, \
-                            stops, verbose):
+                            genetics, stops, verbose):
     
     #check if the folder path is valid
     if not os.path.isdir(folderPath):
@@ -149,6 +152,11 @@ def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataN
             print('The stops vector must be in a strictly increasing order, found %d then %d in vector : %s' % (stops[i], stops[i+1], stops))
             exit()
         
+    #all arguments in genetic should be strictly positive integers
+    if not all(genetic > 0 for genetic in genetics):
+        print("Error: all arguments in genetic should be strictly positive integers, \
+            number of ellipsoids, number of generations, number of individuals")
+        sys.exit(1)
 
     #ERRORS THAT DON'T STOP THE PROGRAM
 

@@ -35,7 +35,7 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataApp[partition==i], color=colors[i-1])
+            plt.scatter(dataAbs[partition==i], dataApp[partition==i], color='black')
 
     elif style == '2D_top':
         plt.title('2D top view of the photometric solid of '+ name)
@@ -50,8 +50,8 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color=colors[i-1])
-            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color=colors[i-1])
+            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color='black')
+            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color='black')
 
     elif style == '3D':
         plt.title('3D view of the photometric solid of '+ name)
@@ -73,6 +73,23 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
             ax.scatter(dataAbs[partition==i], dataOrd[partition==i], dataApp[partition==i], color=colors[i-1])
             ax.scatter(dataAbs[partition==i], -dataOrd[partition==i], dataApp[partition==i], color=colors[i-1])
 
+    elif style.startswith("q"):
+        plt.close()
+        style = style[1:]
+        data = RtoQ(data, epsilon)
+        if style == '2D_side':
+            plotRtable(data, partition, beta, epsilon, style='2D_side', name=name, savPath=savPath, store=store, show=show, verbose=verbose)
+            return 
+        elif style == '2D_top':
+            plotRtable(data, partition, beta, epsilon, style='2D_top', name=name, savPath=savPath, store=store, show=show, verbose=verbose)
+            return
+        elif style == '3D':
+            plotRtable(data, partition, beta, epsilon, style='3D', name=name, savPath=savPath, store=store, show=show, verbose=verbose)
+            return
+        else:
+            print("The style given is not valid.")
+            sys.exit(1)   
+
     else:
         print("The style given is not valid.")
         sys.exit(1)
@@ -88,6 +105,9 @@ def plotRtableCompare(data1, data2, partition, beta, epsilon, style='2D_side', n
 
     if verbose:
         print('Plotting the comparison of the r-table of '+name)
+
+    if style.startswith("q"):
+        print("q styles are not available for comparison plots.")
 
     plt.figure(figsize=(12,9))
     data1.transpose()
@@ -177,3 +197,12 @@ def plotRtableCompare(data1, data2, partition, beta, epsilon, style='2D_side', n
     plt.close()
 
     
+
+def RtoQ(r_table, epsilon):
+    """
+    This function transforms the r-table into a q-table.
+    The q-table is the same as the r-table but the values are divided by cos(epsilon).
+    """
+    epsilon = np.repeat(epsilon,20).reshape(29,20)
+    q_table = r_table / (np.cos(epsilon)**3) / 10e4
+    return q_table

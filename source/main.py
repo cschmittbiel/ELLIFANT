@@ -1,13 +1,10 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import time
 import glob
 import sys
 import os
-
-import matplotlib.pyplot as plt
-
-from multiprocessing import Pool
 
 from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
@@ -60,6 +57,7 @@ def main():
         plotStyle = cmd_args.plotStyle
         plotTypes = cmd_args.plotTypes
 
+        genetics = cmd_args.genetics
         stops = cmd_args.stops
     
         verbose = cmd_args.verbose
@@ -73,12 +71,14 @@ def main():
             print("Error: you can't specify both sheets and ignore, please choose one or the other")
             sys.exit(1)
         
+        genetics = genetics.split(",")
+        genetics = [int(genetic) for genetic in genetics]
         stops = stops.split(",")
         stops = [int(stop) for stop in stops]
 
         checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataName, \
-                                  plotTypes, ellipsoidAdjusting, betaGeneticAlgorithm, partitioningGeneticAlgorithm, \
-                                  stops, verbose)
+                                  plotTypes, ellipsoidAdjusting, betaGeneticAlgorithm, \
+                                  partitioningGeneticAlgorithm, genetics, stops, verbose)
         
         # ----------------------------------
         # ---------- LOAD THE DATA ---------
@@ -198,7 +198,7 @@ def main():
                 if verbose:
                     print("Treating " + r_tables_names[i])
                 v = ellipsoidFitting(r_table, partition, beta, epsilon)
-                r_table_adj = rebuildRtable(v, partition, beta, epsilon, request = 'rp', verbose=False)#verbose here for debugging only
+                r_table_adj = rebuildRtable(v, partition, beta, epsilon, request = 'cols', verbose=False)#verbose here for debugging only
                 results[i] = r_table_adj
 
                 if 'r' in plotTypes:
@@ -209,14 +209,14 @@ def main():
                     plotRtableCompare(r_table, r_table_adj, partition, beta, epsilon, name= 'comparing ' + r_tables_names[i], \
                         store=saveImages, show=showImages, style=plotStyle, verbose=False)#"
             
-                if saveData:
-                    data.iloc[i] = [r_tables_names[i], S1(r_table), Q0(r_table, Q0_weights), Q0_Trapezes(r_table), Qd(r_table,Q0_weights), \
-                                    S1(r_table_adj), Q0(r_table_adj, Q0_weights), Q0_Trapezes(r_table_adj), Qd(r_table_adj,Q0_weights), \
-                                    RMSE(r_table, r_table_adj)]
+                data.iloc[i] = [r_tables_names[i], S1(r_table), Q0(r_table, Q0_weights), Q0_Trapezes(r_table), Qd(r_table,Q0_weights), \
+                                S1(r_table_adj), Q0(r_table_adj, Q0_weights), Q0_Trapezes(r_table_adj), Qd(r_table_adj,Q0_weights), \
+                                RMSE(r_table, r_table_adj)]
             stop = time.time()
             
             if verbose:
                 print("Ellipsoid adjusting algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 2)))
+                print("Found mean RMSE (MRMSE) of %s" % (np.mean(data['RMSE'])))
 
             if saveData:
                 if verbose:
@@ -236,10 +236,24 @@ def main():
 
         if partitioningGeneticAlgorithm:
             start = time.time()
-            fitPartitionGenetic(r_tables, beta, epsilon, nGen= 50, nIndiv=50, nEll=4)
-
+            bestPartition, smallestMRMSE = fitPartitionGenetic(r_tables, beta, epsilon, nEll=genetics[0], nGen=genetics[1], nIndiv=genetics[2], verbose=verbose)
             stop = time.time()
-            print("Partitioning genetic algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 4)))
+            if verbose:
+                print("Partitioning genetic algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 4)))
+
+            print("plotted best partition")
+            print("Best MRMSE: " + str(smallestMRMSE))
+
+            #also write the result to a txt file (don't overwrite, use the first available line)
+            with open(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_' + str(genetics[0]) + '_bestPartition.txt'), 'a') as f:
+                f.write(str(folderPath.split('/')[-1]) + 'Best MRMSE for' + str(genetics[0]) + 'ellipsoids: ' + str(smallestMRMSE) + '\n')
+
+            plt.imshow(np.array(bestPartition), cmap='gray')
+            plt.title('Best partition found')
+            if saveData:
+                plt.savefig(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_' + str(genetics[0]) + '_bestPartition.png'))
+            if showImages:
+                plt.show()
 
     except ValueError:
         print("An error occured.")

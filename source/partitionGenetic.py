@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-
 from multiprocessing import Pool
 
 from cuttingTablesUp import randomPartition
@@ -8,20 +6,25 @@ from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
 from extractData import RMSE
 
-def fitPartitionGenetic(r_tables, beta, epsilon, nGen, nIndiv, nEll):
+def fitPartitionGenetic(r_tables, beta, epsilon, nGen, nIndiv, nEll, verbose):
 
-    # Initialize population of nIndiv partitions
+    # Initialize population of nIndiv partitions, avoinding region overlap:
     partitions = np.array([randomPartition(nEll) for i in range(nIndiv)])
+    for i, p in enumerate(partitions):
+        if np.unique(p).size < nEll:
+            partitions[i] = generatePartition(p, nEll)
 
     # Initialize fitnessLogs map to store fitness values (key: partition, value: fitness)
     fitnessLogs = {}
 
     for i in range(nGen):
         print("Generation " + str(i+1) + " of " + str(nGen))
-        Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv)
+        partitions = Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv)
+        if verbose:
+            print("Best partition of generation " + str(i+1) + " has a MRMSE over this data of " + str(fitnessLogs[str(partitions[0])]))
 
     # Return the best partition (smaller fitness value is better)
-    return min(fitnessLogs, key=fitnessLogs.get)
+    return partitions[0], fitnessLogs[str(partitions[0])]
 
 def Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv):
 
@@ -29,9 +32,8 @@ def Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv):
 
     fitnesses = []
 
-    # Evaluate fitness of each partition
-    with Pool() as pool:
-        fitnesses = pool.starmap(fitness, args)
+    for i in range (len(args)):
+        fitnesses.append(fitness(*args[i]))
 
     # Sort the fitnesses and remember the order to order the partitions
     order = np.argsort(fitnesses)
@@ -49,6 +51,7 @@ def Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv):
     partitions = np.concatenate((partitions, newPartitions))
 
     partitions = partitions[:nIndiv]
+    return partitions
 
 def generatePartition(partition1, nEll, mutationAmount=25):
     #A partition is a 29x20 matrix of strictly positive integers
@@ -114,12 +117,17 @@ def fitness(partition, fitnessLogs, r_tables, beta, epsilon, nEll):
     # Calculate fitness of the partition
     fitness = 0
     for r_table in r_tables:
-
-        v = ellipsoidFitting(r_table, partition, beta, epsilon)
-        adjustedR_table = rebuildRtable(v, partition, beta, epsilon)
+        try:
+            v = ellipsoidFitting(r_table, partition, beta, epsilon)
+        except:
+            print("Error in ellipsoid fitting")
+            print("Partition: " + str(partition))
+            print("Table: " + str(r_table))
+            exit()
+        adjustedR_table = rebuildRtable(v, partition, beta, epsilon, request='rp')
         fitness += RMSE(r_table, adjustedR_table)
 
-        print("Fitness of partition " + str(partition.shape) + " for table " + str(r_table.shape) + " is " + str(fitness))
+        #print("Fitness of partition " + str(partition.shape) + " for table " + str(r_table.shape) + " is " + str(fitness))
 
     fitness /= len(r_tables)
 
