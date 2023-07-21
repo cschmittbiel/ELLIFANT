@@ -14,4 +14,5 @@ py ellifant.py -pga -sd -g 5,100,1000 -fp DryAll -si -v
 
 timeout /t 100 /nobreak
 
+shutdown /s /t 0
 

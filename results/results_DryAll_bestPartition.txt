@@ -6,3 +6,5 @@ DryAll: Best deltaR for 3 ellipsoids: 0.33232582316683806
 (Took 0h 0m 8.24s)
 DryAll: Best deltaR for 3 ellipsoids: 0.3186756617682431
 (Took 0h 0m 16.15s)
+DryAll: Best deltaR for 3 ellipsoids: 0.3512071219446287
+(Took 0h 0m 6.59s)
