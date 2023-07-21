@@ -9,15 +9,15 @@ import os
 from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
 from commandArgParser import CommandLineArgs, checkCommandLineArguments
-from cuttingTablesUp import randomPartition, stopsToPartition
+from partition import loadPartition, stopsToPartition
 from plotRtables import plotRtable, plotRtableCompare
-from partitionGenetic import fitPartitionGenetic, generatePartition
+from partitionGenetic import fitPartitionGenetic
 
 from extractData import S1
 from extractData import Q0
 from extractData import Qd
 from extractData import Q0_Trapezes
-from extractData import RMSE
+from extractData import RMSE, deltaR
 
 def main():
     try:
@@ -55,8 +55,9 @@ def main():
         plotStyle = cmd_args.plotStyle
         plotTypes = cmd_args.plotTypes
 
+        freeConstant = cmd_args.freeConstant
         genetics = cmd_args.genetics
-        stops = cmd_args.stops
+        partition = cmd_args.partition
     
         verbose = cmd_args.verbose
 
@@ -71,8 +72,13 @@ def main():
         
         genetics = genetics.split(",")
         genetics = [int(genetic) for genetic in genetics]
-        stops = stops.split(",")
-        stops = [int(stop) for stop in stops]
+        stops = 'none'
+
+        if str(partition).startswith('0') and str(partition).endswith('180'):
+            stops = partition
+            stops = stops.split(",")
+            print('stops: ', stops)
+            stops = [int(stop) for stop in stops]
 
         checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataName, \
                                   plotTypes, ellipsoidAdjusting, betaGeneticAlgorithm, \
@@ -160,7 +166,15 @@ def main():
         r_tables = [r_table.to_numpy() for r_table in r_tables]
 
         #convert the stops to a partition
-        partition = stopsToPartition(stops)
+        if stops != 'none':
+            partition = stopsToPartition(stops)
+        else:
+            try:
+                file, sheet = partition.split(',')
+                partition = loadPartition(os.path.join('../', file), sheet)
+            except ValueError:
+                print("Error: partition is not a valid partition or a valid file and sheet name, please check the documentation for more information.")
+                sys.exit(1)
 
         #load the weights for the Q0 function
         Q0_weights = pd.read_excel('Q0_weights.xlsx', header=None)
@@ -189,13 +203,13 @@ def main():
             results = np.zeros_like(r_tables)
             data = pd.DataFrame(columns=['r-table', 'S1', 'Q0', 'Q0_trapezes', 'Qd_trapezes', \
                                          'S1_adj', 'Q0_adj', 'Q0_trapezes_adj', 'Qd_trapezes_adj',\
-                                         'RMSE'], index=np.arange(len(r_tables)))
+                                         'deltaR'], index=np.arange(len(r_tables)))
 
             start = time.time()
             for i, r_table in enumerate(r_tables):
                 if verbose:
                     print("Treating " + r_tables_names[i])
-                v = ellipsoidFitting(r_table, partition, beta, epsilon)
+                v = ellipsoidFitting(r_table, partition, beta, epsilon, freeConstant=freeConstant)
                 r_table_adj = rebuildRtable(v, partition, beta, epsilon, request = 'cols', verbose=False)#verbose here for debugging only
                 results[i] = r_table_adj
 
@@ -209,12 +223,12 @@ def main():
             
                 data.iloc[i] = [r_tables_names[i], S1(r_table), Q0(r_table, Q0_weights), Q0_Trapezes(r_table), Qd(r_table,Q0_weights), \
                                 S1(r_table_adj), Q0(r_table_adj, Q0_weights), Q0_Trapezes(r_table_adj), Qd(r_table_adj,Q0_weights), \
-                                RMSE(r_table, r_table_adj)]
+                                deltaR(r_table, r_table_adj)]
             stop = time.time()
             
             if verbose:
                 print("Ellipsoid adjusting algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 2)))
-                print("Found mean RMSE (MRMSE) of %s" % (np.mean(data['RMSE'])))
+                print("Found mean deltaR (MDR) of %s" % (np.mean(data['deltaR'])))
 
             if saveData:
                 if verbose:
@@ -242,8 +256,9 @@ def main():
             print("Best deltaR: " + str(smallestMRMSE))
 
             with open(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_bestPartition.txt'), 'a') as f:
-                f.write(str(folderPath.split('/')[-1]) + ': Best deltaR for ' + str(genetics[0]) + ' ellipsoids: ' + str(smallestMRMSE) + '\n')
-
+                f.write(str(folderPath.split('/')[-1]) + ': Best deltaR for ' + str(genetics[0]) + ' ellipsoids: ' + str(smallestMRMSE) + '\n'\
+                        + '(Took ' + str(round((stop-start)//3600)) + 'h ' + str(round((stop-start)%3600//60)) + 'm ' + str(round((stop-start),2)) + 's)\n')
+            
             plt.imshow(np.array(bestPartition), cmap='Set3')
             plt.title('Best partition found')
             if saveImages:

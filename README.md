@@ -4,9 +4,9 @@
 
 **ELLIpsoid Fitting and Adjusting Numeric Tool**, or ELLIFANT, is a python application that allows users to adjust ellipsoids to their r-table measurements, and find the best fitting partitions for their data.
 
-For this guide, basic understanding of what an r-table is and how it is used is assumed. For more information on r-tables, please refer to (Valérie Muzet).
+For this guide, basic understanding of what an r-table is and how it is used is assumed. For more information on r-tables, please refer to (fill in later).
 
-We also assume good knowledge of the 2020 paper by Ana Ogando-Martinez *et al.* (Ana Ogando-Martinez *et al.*), which describes the ellipsoid fitting algorithm that serves as a basis for this application.
+We also assume good knowledge of the 2020 paper by Ana Ogando-Martinez *et al.* , which describes the ellipsoid fitting algorithm that serves as a basis for this application.
 
 ## Installation
 
@@ -60,7 +60,7 @@ You must specify one and only one of these functions per command line call.
 
 - -s | --sheets : If you only want to parse a few sheets of the files, you cans specify them here, for example, `-s R1,R2,R3` will only parse the sheets R1, R2 and R3 of the files.
 
-- -i | --ignore : This is the opposite of the sheets argument, it allows you to ignore certain sheets, for example, `-i R1,R2,R3` will parse all sheets except R1, R2 and R3.
+- -i | --ignore : This is the opposite of the sheets argument, it allows you to ignore certain sheets, for example, `-i R1,R2,R3` will parse all sheets except R1, R2 and R3. Sheets named `Feuil1` are ignored by default, as they are usually used as info about a database.
 
 - -sf | --saveFolder : This is the folder where the results of your computations will be saved, it is the results folder of the application by default, but you can specify a different folder if you want to.
 
@@ -68,6 +68,14 @@ You must specify one and only one of these functions per command line call.
 
 - -sdn | --saveDataName : This is the name of the file where the results of your computations will be saved, it defaults to `results`.
 
+- -st | --stops : This is the stops vector you want to use for the ellipsoid adjusting, it defaults to `0,15,60,180` as it is the value proposed by the paper by Ana Ogando-Martinez *et al.*, but you can specify a different stops vector if you want to.
+
+- -g | --genetic : This is a vector of three values that controls the genetic algorithm, the first value is the number of ellipses you want to fit to the r-table, the second value is the number of generations one individual has to win in a row to be considered the best (the genetic algorithm always terminate at 10,000 generations), and the third value is the number of individuals you want to have in your population, it defaults to `3,5,30` as to not use up too many ressources, but to get satisfying results, you should use at least `n,20,100` for any n.
+
+- -ps | --plotStyle : This is the style of plot you want to save or show with matplotlib, it defaults to a 2d side view plot, but you can specify a different style if you want to, for example, `-ps 2D_top` will plot the photometric solids from the top, and `-ps 3D` will plot the photometric solids in 3D. Additionally, adding `q` before the style will plot the photometric solids for the corresponding q table instead of the r table, for example, `-ps q2D_side` will plot the standard 2D side view plot for the q table.
+
+- -pt | plotTypes : This controls what you want to plot: `-pt o` will plot the original r-table, `-pt r` will plot the resulting r-table after the fitting of ellipsoids, and `-pt c` will plot a comparison between the original and resulting r-tables. You can combine these arguments, for example, `-pt or` will work just as you would expect it to.
+ 
 #### Boolean arguments (no value needed, typing them will set them to True)
 
 <span style="color:red">Do not forget this argument if you want to save your results !</span> 
@@ -79,3 +87,11 @@ You must specify one and only one of these functions per command line call.
 - -sh | --showImages : Shows the matplotlib plots as they are computed, this is useful if you want to see the plots but do not want to save them, this is compatible with the saveImages argument.
 
 - -v | --verbose : makes the application print more information about what it is doing, this is useful if you want to see the progress of the computations, but it can be a bit overwhelming if you are running a lot of files.
+
+## Examples
+
+- To see your favourite r-table in 3D, just type `python3 ellifant.py -ea -fp <path_to_your_file> -p <your_excel_file> -s <your sheet> -pt o -ps 3D -sh` in your terminal.
+
+- To see the results of the ellipsoid adjusting on your r-table in 2D from the top, just type : `python3 ellifant.py -ea -fp <path_to_your_file> -p <your_excel_file> -s <your sheet> -pt r -ps 2D_top -sh` in your terminal.
+
+- To look for the best partition to sum up the r-tables from your database, just type : `python3 ellifant.py -pga -fp <path_to_your_directory> -g 3,5,30 -sd -si` in your terminal.

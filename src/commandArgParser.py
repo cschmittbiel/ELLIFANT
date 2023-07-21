@@ -60,8 +60,9 @@ class CommandLineArgs:
         parser.add_argument('-ps',"--plotStyle", required=False, type=str, default="2D_side", choices=['2D_side','2D_top','3D','q2D_side','q2D_top','q3D'], help="The style of the plot, default is 2D_side, other options are 2D_top, 3D")
         parser.add_argument('-pt',"--plotTypes", required=False, type=str, default="", help="The types of plots to show, default is none, but input can 'o' (original table), 'r' (result), 'c' (comparison)")
 
-        parser.add_argument('-g',"--genetics", required=False, type=str, default="3,10,10", help="The parameters for the genetic algorithm, number of ellipsoids, number of generations, population size, default is 3,10,10")
-        parser.add_argument('-st',"--stops", required=False, type=str, default='0,15,60,180', help="The stops for the ellipsoid adjusting algorithm, default is 0,15,60,180")
+        parser.add_argument('-fc',"--freeConstant", required=False, action='store_true', help="If this argument is given, the program add a constant term to the ellipses to better fit the data, very useful for r-tables of wet surfaces")
+        parser.add_argument('-g',"--genetics", required=False, type=str, default="3,5,30", help="The parameters for the genetic algorithm, number of ellipsoids, number of generations, population size, default is 3,10,10")
+        parser.add_argument('-pa',"--partition", required=False, type=str, default='parts,bestDry3', help="The partition to use for the partitioning genetic algorithm, default is parts,bestDry3")
 
         parser.add_argument('-v',"--verbose", required=False, action='store_true', help="If this argument is given, the program will print more information")
 
@@ -86,15 +87,17 @@ class CommandLineArgs:
         self.plotStyle = self.args.plotStyle
         self.plotTypes = self.args.plotTypes
 
+        self.freeConstant = self.args.freeConstant
         self.genetics = self.args.genetics
-        self.stops = self.args.stops
+        self.partition = self.args.partition
+
         self.verbose = self.args.verbose
 
         return self.args
     
 def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataName, \
                             plotTypes, ellipsoidAdjusting, betaGeneticAlgorithm, partitioningGeneticAlgorithm, \
-                            genetics, stops, verbose):
+                            genetics, partition, verbose):
     
     #check if the folder path is valid
     if not os.path.isdir(folderPath):
@@ -132,28 +135,40 @@ def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataN
         print("You must give exactly one of the three algorithms, -ea, -bga or -pga.")
         sys.exit(1)
 
-    #if the user specified stops, but didn't give the ellipsoid adjusting algorithm return an error
-    if stops is not None and ellipsoidAdjusting is False:
-        print("You can only give the stops for the ellipsoid adjusting algorithm.")
-        sys.exit(1)
-    
-    #check if the stops vector is valid
-    if stops[0] != 0:
-        print('The first stop must be 0, found %d in vector : %s' % (stops[0], stops))
-        exit()
+    #check if the partition is a stops vetor or a partition filepath
+    if str(partition).startswith("parts"):
+        #check if the partition filepath exists
+        if not os.path.isfile(partition):
+            print("The partition file path given does not exist.")
+            sys.exit(1)
 
-    if stops[-1] != 180:
-        print('The last stop must be 180, found %d in vector : %s' % (stops[-1], stops))
-        exit()
+    else:
+        stops = partition
 
-    #check the stops vector is sorted
-    for i in range(0, len(stops)-1):
-        if stops[i] >= stops[i+1]:
-            print('The stops vector must be in a strictly increasing order, found %d then %d in vector : %s' % (stops[i], stops[i+1], stops))
+        #if the user specified stops, but didn't give the ellipsoid adjusting algorithm return an error
+        if stops is not None and ellipsoidAdjusting is False:
+            print("You can only give the stops for the ellipsoid adjusting algorithm.")
+            sys.exit(1)
+        
+        #check if the stops vector is valid
+        if stops[0] != 0:
+            print('The first stop must be 0, found %d in vector : %s' % (stops[0], stops))
             exit()
+
+        if stops[-1] != 180:
+            print('The last stop must be 180, found %d in vector : %s' % (stops[-1], stops))
+            exit()
+
+        #check the stops vector is sorted
+        for i in range(0, len(stops)-1):
+            if stops[i] >= stops[i+1]:
+                print('The stops vector must be in a strictly increasing order, found %d then %d in vector : %s' % (stops[i], stops[i+1], stops))
+                exit()
         
     #all arguments in genetic should be strictly positive integers
     if not all(genetic > 0 for genetic in genetics):
         print("Error: all arguments in genetic should be strictly positive integers, \
             number of ellipsoids, number of generations to survive to win, number of individuals")
         sys.exit(1)
+
+    #if both stops and partition are given, return an error

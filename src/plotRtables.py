@@ -35,7 +35,7 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataApp[partition==i], color='black')
+            plt.scatter(dataAbs[partition==i], dataApp[partition==i], color=colors[i-1])
 
     elif style == '2D_top':
         plt.title('2D top view of the photometric solid of '+ name)
@@ -50,8 +50,8 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color='black')
-            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color='black')
+            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color=colors[i-1])
+            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color=colors[i-1])
 
     elif style == '3D':
         plt.title('3D view of the photometric solid of '+ name)

@@ -34,12 +34,7 @@ def rebuildRtable(v, partition, beta, epsilon, rollAverages = True, request = 'n
 
         #I still don't know why or how or what, but this fixes the problem
         #I will try to figure it out later
-        if request == 'cols':
-            if j == 4:
-                group = 0
-            if j == 11:
-                group = 1
-
+        
         A = a[group]*(np.sin(epsilon[i])**2)*(np.cos(betaRad[j])**2) + b[group]*(np.sin(epsilon[i])**2)*(np.sin(betaRad[j])**2) + c[group]*(np.cos(epsilon[i])**2) + g[group]*np.sin(epsilon[i])*np.cos(epsilon[i])*np.cos(betaRad[j])
 
         #d != 0 makes us do much more math, so we don't do that if it's not needed

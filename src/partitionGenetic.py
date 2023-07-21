@@ -1,18 +1,26 @@
 import numpy as np
-from multiprocessing import Pool
+import multiprocessing as mp
 
-from cuttingTablesUp import randomPartition
+
+from partition import randomPartition
 from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
 from extractData import deltaR
 
 def fitPartitionGenetic(r_tables, beta, epsilon, nMaxGen, nIndiv, nEll, verbose):
 
-    # Initialize population of nIndiv partitions, avoinding region overlap:
+    # Initialize population of nIndiv partitions, each with nEll ellipsoids
     partitions = np.array([randomPartition(nEll) for i in range(nIndiv)])
-    for i, p in enumerate(partitions):
-        if np.unique(p).size < nEll:
-            partitions[i] = generatePartition(p, nEll)
+    # This is to make sure that each partition has nEll ellipsoids
+
+    # TODO
+    # One annoying one in a million chance that a partition has less than nEll ellipsoids bug
+    # This is a temporary fix, we should find the bug and fix it but it's not a priority
+    # It's not a big deal because the algorithm will still work and this loop runs only once
+
+    for i in range(nIndiv):
+        while nEll != len(np.unique(partitions[i])):
+            partitions[i] = randomPartition(nEll)
 
     # Initialize fitnessLogs map to store fitness values (key: partition, value: fitness)
     fitnessLogs = {}
@@ -24,7 +32,7 @@ def fitPartitionGenetic(r_tables, beta, epsilon, nMaxGen, nIndiv, nEll, verbose)
 
         # Compute fitness of each partition
         OldChampion = partitions[0]
-        partitions = Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv)
+        partitions, fitnessLogs = Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv, nMaxGen, reign)
         Champion = partitions[0]
 
         # Check if the best partition has changed, if not, increment the counter
@@ -34,95 +42,114 @@ def fitPartitionGenetic(r_tables, beta, epsilon, nMaxGen, nIndiv, nEll, verbose)
             reign = 1
         if verbose:
             print("Best partition of generation " + str(counter) + " has a deltaR over this data of " + \
-                  str(round(fitnessLogs[str(partitions[0])], 3)) + ", it has won the last " + str(reign) + " generations.")
+                str(round(fitnessLogs[str(partitions[0])], 3)) + ", it has won the last " + str(reign) + " generations.")
 
     # Return the best partition (smaller fitness value is better)
     return partitions[0], fitnessLogs[str(partitions[0])]
 
-def Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv):
+def Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv, nMaxGen, reign):
 
     args = [(partitions[i], fitnessLogs, r_tables, beta, epsilon, nEll) for i in range(len(partitions))]
 
     fitnesses = []
 
-    for i in range (len(args)):
-        fitnesses.append(fitness(*args[i]))
+    processes = mp.cpu_count()//2
+    pool = mp.Pool(processes=processes)
 
+    with pool as p:
+        fitnesses = p.starmap(fitness, args)
+
+    # Update fitnessLogs (the processes need to put the results in the fitnessLogs map so they agree)
+    for i in range(len(partitions)):
+        fitnessLogs[str(partitions[i])] = fitnesses[i]
+
+    
     # Sort the fitnesses and remember the order to order the partitions
     order = np.argsort(fitnesses)
     
     # Order the partitions
     partitions = partitions[order]
-
+    
     # Select the best half of the partitions
     partitions = partitions[:len(partitions)//2]
 
+    mutationAmount = 15
+    if reign > nMaxGen // 2:# We refine the search once we have a good partition
+        mutationAmount = 5
+    elif reign > nMaxGen // 10:
+        mutationAmount = 2
+
     # Generate new partitions
-    newPartitions = np.array([generatePartition(partitions[i], nEll) for i in range(len(partitions))])
+    newPartitions = np.array([generatePartition(partitions[i], nEll, mutationAmount) for i in range(len(partitions))])
 
     # Add the new partitions to the population
     partitions = np.concatenate((partitions, newPartitions))
-
+    
     partitions = partitions[:nIndiv]
-    return partitions
 
-def generatePartition(partition1, nEll, mutationAmount=25):
+    return partitions, fitnessLogs
+
+def generatePartition(partition1, nEll, mutationAmount=15):
     #A partition is a 29x20 matrix of strictly positive integers
     #each integers is a region of the table, to be adjusted by the ellipsoid fitting
-
-    newPartition = np.copy(partition1)
+    partition2 = np.copy(partition1)
 
     #expand the regions
     for i in range(mutationAmount):
 
         #count the number of elements in each region
         nElsperRegion = np.zeros(nEll)
-        flatten_partition = partition1.flatten().astype(int)
+        flatten_partition = partition2.flatten().astype(int)
         unique_regions, region_counts = np.unique(flatten_partition, return_counts=True)
         nElsperRegion[unique_regions - 1] = region_counts
 
-        #select a random region to expand using the weights of the number of elements in each region
+        #select a random region to expand
         region = np.random.choice(nEll)
-        if min(nElsperRegion) < 30:
-            region = np.argmin(nElsperRegion)
+
+        #we need to fudge the region selection if we don't want to lose regions
+        if min(region_counts) < 30:
+            region = np.argmin(region_counts)
 
         #select a random direction to expand the region
-        direction = np.random.randint(4)
-        #expand the region in the selected direction
-        if direction == 0:
-            for j in range(1, 20):
-                newPartition[:, j-1] = np.where(partition1[:, j] == region, region, newPartition[:, j-1])
+        direction = np.random.choice(4)
 
-        elif direction == 1:
-            for j in range(19):
-                newPartition[:, j+1] = np.where(partition1[:, j] == region, region, newPartition[:, j+1])
+        #expand the region  
+        partition2 = expand(partition2, float(region+1), direction)  
 
-        elif direction == 2:
-            for j in range(1, 29):
-                newPartition[j-1, :] = np.where(partition1[j, :] == region, region, newPartition[j-1, :])
-
-        elif direction == 3:
-            for j in range(28):
-                newPartition[j+1, :] = np.where(partition1[j, :] == region, region, newPartition[j+1, :])
-
-        partition1 = np.copy(newPartition)
-    
-    if np.unique(newPartition).size < nEll:
-        #if the new partition has less regions than the original, add regions
-        #the new regions are added in the same way as the original partition
-        while np.unique(newPartition).size < nEll:
-            missingRegions = np.setdiff1d(np.arange(1, nEll+1), np.unique(newPartition))
-            for region in missingRegions:
-                x=np.random.randint(29-5)
-                y=np.random.randint(20-5)
-                newPartition[x:x+5, y:y+5] = region
+    #if there are less regions than the number of ellipsoids, generate a new partition 
+    #(brings in new blood to the population)
+    if len(unique_regions) < nEll:
+        partition1 = randomPartition(nEll)
 
     #verify that the new partition has the same number of regions
     #if not, generate a new one
-    return newPartition
+    return partition2
+
+#expand a region in a given direction (0: left, 1: right, 2: up, 3: down)                             
+def expand(matrix, region, direction):
+    if direction == 0:
+        # Expand the region one block to the left
+        mask = (matrix[:, 1:] == region) & (matrix[:, :-1] != region)
+        matrix[:, :-1][mask] = region
+
+    elif direction == 1:
+        # Expand the region one block to the right
+        mask = (matrix[:, :-1] == region) & (matrix[:, 1:] != region)
+        matrix[:, 1:][mask] = region
+
+    elif direction == 2:
+        # Expand the region one block upwards
+        mask = (matrix[1:, :] == region) & (matrix[:-1, :] != region)
+        matrix[:-1, :][mask] = region
+
+    elif direction == 3:
+        # Expand the region one block downwards
+        mask = (matrix[:-1, :] == region) & (matrix[1:, :] != region)
+        matrix[1:, :][mask] = region
+
+    return matrix
 
 def fitness(partition, fitnessLogs, r_tables, beta, epsilon, nEll):
-
     # Check if the fitness of the partition has already been calculated
     if str(partition) in fitnessLogs:
         return fitnessLogs[str(partition)]
@@ -130,8 +157,8 @@ def fitness(partition, fitnessLogs, r_tables, beta, epsilon, nEll):
     # Calculate fitness of the partition
     fitness = 0
     for r_table in r_tables:
-        try:
-            v = ellipsoidFitting(r_table, partition, beta, epsilon)#no freeing of parameters yet
+        try :
+            v = ellipsoidFitting(r_table, partition, beta, epsilon, freeConstant=True)
         except:
             print("Error in ellipsoid fitting")
             print("Partition: " + str(partition))
@@ -140,11 +167,10 @@ def fitness(partition, fitnessLogs, r_tables, beta, epsilon, nEll):
         adjustedR_table = rebuildRtable(v, partition, beta, epsilon, request='rp')
         fitness += deltaR(r_table, adjustedR_table)
 
-        #print("Fitness of partition " + str(partition.shape) + " for table " + str(r_table.shape) + " is " + str(fitness))
-
     fitness /= len(r_tables)
 
-    # Store fitness of the partition
+    # Store the fitness of the partition
     fitnessLogs[str(partition)] = fitness
 
     return fitness
+

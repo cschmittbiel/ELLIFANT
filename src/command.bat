@@ -1,13 +1,12 @@
-py main.py -pga -v -sd -g 4,5,5 -fp Tables_CIE
-py main.py -pga -sd -g 4,500,500 -fp Tables_CIE
-py main.py -pga -sd -g 4,500,500 -fp SURFACE
-py main.py -pga -sd -g 4,500,500 -fp KAI
-py main.py -pga -sd -g 4,500,500 -fp METAS
-py main.py -pga -sd -g 4,500,500 -fp LCPC
 
-py main.py --partitiongeneticalgorithm
+py ellifant.py -ea -fp Tables_CIE -s R1 -pa 0,10,90,130,180 -sh -pt or -fc
+py ellifant.py -pga -v -sd -g 3,2,5 -fp DryAll -si
+py ellifant.py -pga -v -sd -g 3,2,5 -fp WetAll -si
 
-sleep 50
+py ellifant.py -pga -sd -g 3,100,1000 -fp WetAll -si -v
+py ellifant.py -pga -sd -g 4,100,1000 -fp WetAll -si -v
 
-shutdown -s -t 0
-```
+timeouts /t 100 /nobreak
+
+shutdown /s /t 0
+

@@ -1,0 +1,8 @@
+WetAll: Best deltaR for 3 ellipsoids: 1.3971169451280563
+(Took 0h 0m 9.97s)
+WetAll: Best deltaR for 3 ellipsoids: 1.8557821528383747
+(Took 0h 0m 4.81s)
+WetAll: Best deltaR for 3 ellipsoids: 1.189200975992712
+(Took 4h 36m 16595.81s)
+WetAll: Best deltaR for 4 ellipsoids: 1.1917700476098392
+(Took 3h 35m 12936.83s)
