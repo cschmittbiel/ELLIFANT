@@ -158,12 +158,12 @@ def fitness(partition, fitnessLogs, r_tables, beta, epsilon, nEll):
     fitness = 0
     for r_table in r_tables:
         try :
-            v = ellipsoidFitting(r_table, partition, beta, epsilon, freeConstant=True)
+            v = ellipsoidFitting(r_table, partition, beta, epsilon)
         except:
             print("Error in ellipsoid fitting")
             print("Partition: " + str(partition))
             print("Table: " + str(r_table))
-            exit()
+            exit(1)
         adjustedR_table = rebuildRtable(v, partition, beta, epsilon, request='rp')
         fitness += deltaR(r_table, adjustedR_table)
 

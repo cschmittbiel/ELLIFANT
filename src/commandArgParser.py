@@ -62,7 +62,7 @@ class CommandLineArgs:
 
         parser.add_argument('-fc',"--freeConstant", required=False, action='store_true', help="If this argument is given, the program add a constant term to the ellipses to better fit the data, very useful for r-tables of wet surfaces")
         parser.add_argument('-g',"--genetics", required=False, type=str, default="3,5,30", help="The parameters for the genetic algorithm, number of ellipsoids, number of generations, population size, default is 3,10,10")
-        parser.add_argument('-pa',"--partition", required=False, type=str, default='parts,bestDry3', help="The partition to use for the partitioning genetic algorithm, default is parts,bestDry3")
+        parser.add_argument('-pa',"--partition", required=False, type=str, default='none', help="The partition to use for the partitioning genetic algorithm, default is parts,bestDry3")
 
         parser.add_argument('-v',"--verbose", required=False, action='store_true', help="If this argument is given, the program will print more information")
 
@@ -136,14 +136,21 @@ def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataN
         sys.exit(1)
 
     #check if the partition is a stops vetor or a partition filepath
-    if str(partition).startswith("parts"):
+    if str(partition).startswith("part"):
         #check if the partition filepath exists
+        partition = '../' + partition
+        partition = partition.split(',')[0]
         if not os.path.isfile(partition):
-            print("The partition file path given does not exist.")
+            print("The partition file path given: %s does not exist." % partition)
             sys.exit(1)
 
     else:
-        stops = partition
+        if partition == 'none':
+            stops = '0,15,60,180'
+        else:
+            stops = partition
+        stops = stops.split(',')
+        stops = [int(i) for i in stops]
 
         #if the user specified stops, but didn't give the ellipsoid adjusting algorithm return an error
         if stops is not None and ellipsoidAdjusting is False:
@@ -153,17 +160,17 @@ def checkCommandLineArguments(folderPath, saveFolder, saveImageFolder, saveDataN
         #check if the stops vector is valid
         if stops[0] != 0:
             print('The first stop must be 0, found %d in vector : %s' % (stops[0], stops))
-            exit()
+            exit(1)
 
         if stops[-1] != 180:
             print('The last stop must be 180, found %d in vector : %s' % (stops[-1], stops))
-            exit()
+            exit(1)
 
         #check the stops vector is sorted
         for i in range(0, len(stops)-1):
             if stops[i] >= stops[i+1]:
                 print('The stops vector must be in a strictly increasing order, found %d then %d in vector : %s' % (stops[i], stops[i+1], stops))
-                exit()
+                exit(1)
         
     #all arguments in genetic should be strictly positive integers
     if not all(genetic > 0 for genetic in genetics):
