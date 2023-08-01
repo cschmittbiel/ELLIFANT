@@ -85,3 +85,25 @@ def deltaR(original_Rtable, adjusted_Rtable):
     meanO = mean(original_Rtable)
     meanA = mean(adjusted_Rtable)
     return 2 * err / (meanO + meanA)
+
+def Entropy(r_table):
+    """
+    This function calculates the entropy of the R-table
+    """
+
+    # we calculate the entropy
+    entropy = -np.sum(r_table * np.log(r_table), axis = 0)
+    entropy = np.sum(entropy, axis = 0)
+
+    return entropy
+
+def Smoothness(r_table):
+    """
+    This function calculates the smoothness of the R-table
+    """
+
+    # we calculate the smoothness
+    smoothness = np.sum(np.abs(r_table[1:,:] - r_table[:-1,:]), axis = 0)
+    smoothness = np.sum(smoothness, axis = 0)
+
+    return smoothness

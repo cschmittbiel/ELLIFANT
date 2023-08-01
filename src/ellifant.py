@@ -269,6 +269,5 @@ def main():
             pd.DataFrame(bestPartition).to_excel(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + 'bestPartitions.xlsx')\
                                                 , header=False, index=False, sheet_name= str(genetics[0]) + '_ell')
 
-
 if __name__ == "__main__":
     main()

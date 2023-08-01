@@ -19,9 +19,12 @@ def stopsToPartition(stops):
     partition = np.zeros((29,20))
     c=0
     for i in range(20):
-        if beta[i] in stops and beta[i] != 180:
+        #if we overpass a stop, we increment c
+        if stops[c] <= beta[i]:
             c += 1
         partition[:,i] = c
+
+    partition[:,19] = c-1
     return partition
 
 #Four way flood fill algorithm + rolling average
@@ -69,7 +72,6 @@ def randomPartition(n=3, show=False):
 
     #now we do a discrete rolling 3x3 average to smooth the partition
     count = np.zeros((27, 18, n), dtype=int)
-    neighborhood = partition[1:28, 1:19]
 
     for k in range(-1, 2):
         for l in range(-1, 2):

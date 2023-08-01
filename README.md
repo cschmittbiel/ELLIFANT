@@ -40,11 +40,13 @@ You can put all command line arguments in any order you like, some values will r
 
 You can use either the short or long and comprehensive version of the arguments, for example, -ea and --ellipsoidAdjusting are interchangeable.
 
+Once you are happy with a result from a computation, make sure to save it, as the results are not saved by default, and will be overwritten if you run another computation. This is to avoid having to delete old results manually, and acumulating a lot of useless data because of a loose command line call.
+
 ## Functions
 
-The app has 3 main functions, fitting ellipses and searching for the best fitting partitions, either along the beta vector or over the whole r-table. (see the report for more information on the algorithm)
+The app has 2 main functions, fitting ellipses and searching for the best fitting partitions, either along the beta vector or over the whole r-table. (see the report for more information on the algorithm)
 
-- -ea | --ellipsoidAdjusting : Adjusts the ellipsoids to the r-table measurements according to the stops vector
+- -ea | --ellipsoidAdjusting : Adjusts the ellipsoids to the r-table measurements according to the stops vector or a partition
 
 - -bga | --betaGeneticAlgorithm : Searches for the best fitting partition of beta for the provided data using a genetic algorithm
 
@@ -68,7 +70,8 @@ You must specify one and only one of these functions per command line call.
 
 - -sdn | --saveDataName : This is the name of the file where the results of your computations will be saved, it defaults to `results`.
 
-- -st | --stops : This is the stops vector you want to use for the ellipsoid adjusting, it defaults to `0,15,60,180` as it is the value proposed by the paper by Ana Ogando-Martinez *et al.*, but you can specify a different stops vector if you want to.
+- -pa | --partition : This describes how you want to partition your data, it defaults to `0,15,60,180` just like in the paper, but you can specify a different partition if you want to, for example, `-pa 0,10,90,180` is known to be the optimal partition for r-tables on dry 
+road surfaces.
 
 - -g | --genetic : This is a vector of three values that controls the genetic algorithm, the first value is the number of ellipses you want to fit to the r-table, the second value is the number of generations one individual has to win in a row to be considered the best (the genetic algorithm always terminate at 10,000 generations), and the third value is the number of individuals you want to have in your population, it defaults to `3,5,30` as to not use up too many ressources, but to get satisfying results, you should use at least `n,20,100` for any n.
 
@@ -78,13 +81,15 @@ You must specify one and only one of these functions per command line call.
  
 #### Boolean arguments (no value needed, typing them will set them to True)
 
-<span style="color:red">Do not forget this argument if you want to save your results !</span> 
+<span style="color:red">Do not forget the -sd argument if you want to save your results !</span> 
 
 - -sd | --saveData : Saves the results of your computations in different formats depending on what you requested, the files will be saved in the results folder of the application (or the folder you specified with the -sf argument).
 
 - -si | --saveImages : Saves the images you want according to the plotTypes and styles you requested, the images will be saved in the images folder of the application.
 
 - -sh | --showImages : Shows the matplotlib plots as they are computed, this is useful if you want to see the plots but do not want to save them, this is compatible with the saveImages argument.
+
+- -fc | -- freeConstant : This is a boolean to determine weather or not you want to use the free constant in the ellipsoid fitting algorithm, it is false if you don't specify it.
 
 - -v | --verbose : makes the application print more information about what it is doing, this is useful if you want to see the progress of the computations, but it can be a bit overwhelming if you are running a lot of files.
 

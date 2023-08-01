@@ -6,6 +6,14 @@ import sys
 colors = ['red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink', 'brown', 'black', 'grey']
 
 def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', savPath='../images/', store=False, show=True, verbose=False):
+    
+    # Ensure to write in big letters in the plot
+    plt.rcParams['axes.labelsize'] = 20
+    plt.rcParams['axes.titlesize'] = 20
+
+    # Ensure to write in big letters in the markings of the axis
+    plt.rcParams['xtick.labelsize'] = 15
+    plt.rcParams['ytick.labelsize'] = 15
 
     if verbose:
         print('Plotting the r-table of '+name)
@@ -50,8 +58,8 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color=colors[i-1])
-            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color=colors[i-1])
+            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color='black') #colors[i-1])
+            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color='black') #colors[i-1])
 
     elif style == '3D':
         plt.title('3D view of the photometric solid of '+ name)
@@ -102,6 +110,9 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
 #Compare plots
 def plotRtableCompare(data1, data2, partition, beta, epsilon, style='2D_side', name='r-table', savPath='../images/', store=False, show=True, verbose=False):
+
+    # Ensure to write in big letters in the plot
+    plt.rcParams['axes.labelsize'] = 20
 
     if verbose:
         print('Plotting the comparison of the r-table of '+name)

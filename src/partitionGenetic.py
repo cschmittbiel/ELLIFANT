@@ -53,7 +53,7 @@ def Generation(partitions, fitnessLogs, r_tables, beta, epsilon, nEll, nIndiv, n
 
     fitnesses = []
 
-    processes = mp.cpu_count()//2
+    processes = mp.cpu_count()-1
     pool = mp.Pool(processes=processes)
 
     with pool as p:
