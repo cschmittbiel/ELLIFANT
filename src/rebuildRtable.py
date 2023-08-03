@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 def rebuildRtable(v, partition, beta, epsilon, rollAverages = True, request = 'none', verbose = False):
     #the request is to know what to apply the roll averages to (if anything)
@@ -92,5 +91,5 @@ def rebuildRtable(v, partition, beta, epsilon, rollAverages = True, request = 'n
                     newData[i,j] = (data[i,j-1] + data[i,j] + data[i,j+1])/3
                 if partition[i,j] != partition[i+1,j]:
                     newData[i,j] = (data[i-1,j] + data[i,j] + data[i+1,j])/3
-
+                    
     return newData

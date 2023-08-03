@@ -17,7 +17,7 @@ from extractData import S1
 from extractData import Q0
 from extractData import Qd
 from extractData import Q0_Trapezes
-from extractData import RMSE, deltaR
+from extractData import RMSE, deltaR, Smoothness, deltaQ0S1, Entropy
 
 def main():
     # The standard CIE angles for beta and tan epsilon :
@@ -55,6 +55,9 @@ def main():
     plotTypes = cmd_args.plotTypes
 
     freeConstant = cmd_args.freeConstant
+    coloredOT = cmd_args.coloredOriginalTables
+    conserveZeros = cmd_args.conserveZeros
+
     genetics = cmd_args.genetics
     partition = cmd_args.partition
 
@@ -175,6 +178,12 @@ def main():
             print("Error: partition is not a valid partition or a valid file and sheet name, please check the documentation for more information.")
             sys.exit(1)
 
+    #get the number of ellipsoids
+    nEll = np.unique(partition).size
+    nCoefs = 5
+    if freeConstant:
+        nCoefs += 1
+
     #load the weights for the Q0 function
     Q0_weights = pd.read_excel('Q0_weights.xlsx', header=None)
 
@@ -191,7 +200,7 @@ def main():
         #plot the original r-tables
         for i, r_table in enumerate(r_tables):
             plotRtable(r_table, partition, beta, epsilon, name= r_tables_names[i], \
-                        store=saveImages, show=showImages, style=plotStyle, verbose=verbose)
+                        store=saveImages, show=showImages, style=plotStyle, coloredOT=coloredOT, verbose=verbose)
 
     # ---------------------------------------------------------
     # ------------- ELLIPSOID ADJUSTING ALGORITHM -------------
@@ -200,29 +209,37 @@ def main():
     if ellipsoidAdjusting:
         #run the ellipsoid adjusting algorithm
         results = np.zeros_like(r_tables)
-        data = pd.DataFrame(columns=['r-table', 'S1', 'Q0', 'Q0_trapezes', 'Qd_trapezes', \
-                                        'S1_adj', 'Q0_adj', 'Q0_trapezes_adj', 'Qd_trapezes_adj',\
-                                        'deltaR'], index=np.arange(len(r_tables)))
+        data = pd.DataFrame(columns=['r-table', 'S1', 'Q0', 'Q0_trapezes', 'Qd_trapezes', 'smoothness','entropy',\
+                                        'S1_adj', 'Q0_adj', 'Q0_trapezes_adj', 'Qd_trapezes_adj', 'smoothness_adj','entropy_adj',\
+                                        'deltaR','deltaQ0S1','RMSE'], index=np.arange(len(r_tables)))
+        
+        ellipsoidCoeffs = np.zeros((len(r_tables), nEll*nCoefs))
 
         start = time.time()
         for i, r_table in enumerate(r_tables):
             if verbose:
                 print("Treating " + r_tables_names[i])
             v = ellipsoidFitting(r_table, partition, beta, epsilon, freeConstant=freeConstant)
+            ellipsoidCoeffs[i] = np.array(v).flatten()
             r_table_adj = rebuildRtable(v, partition, beta, epsilon, request = 'cols', verbose=False)#verbose here for debugging only
+            
+            #any 0 in the original r-table will be put at 0 in the adjusted r-table
+            if conserveZeros:
+                r_table_adj[r_table == 0] = 0
+
             results[i] = r_table_adj
 
             if 'r' in plotTypes:
                 plotRtable(r_table_adj, partition, beta, epsilon, name= 'adjusted ' + r_tables_names[i], \
-                    store=saveImages, show=showImages, style=plotStyle, verbose=False)#"verbose here for debugging onl"
+                    store=saveImages, show=showImages, style=plotStyle, coloredOT = True, verbose=False)#"verbose here for debugging onl"
                 
             if 'c' in plotTypes:
                 plotRtableCompare(r_table, r_table_adj, partition, beta, epsilon, name= 'comparing ' + r_tables_names[i], \
                     store=saveImages, show=showImages, style=plotStyle, verbose=False)#"
         
-            data.iloc[i] = [r_tables_names[i], S1(r_table), Q0(r_table, Q0_weights), Q0_Trapezes(r_table), Qd(r_table,Q0_weights), \
-                            S1(r_table_adj), Q0(r_table_adj, Q0_weights), Q0_Trapezes(r_table_adj), Qd(r_table_adj,Q0_weights), \
-                            deltaR(r_table, r_table_adj)]
+            data.iloc[i] = [r_tables_names[i], S1(r_table), Q0(r_table, Q0_weights), Q0_Trapezes(r_table), Qd(r_table,Q0_weights), Smoothness(r_table), Entropy(r_table), \
+                            S1(r_table_adj), Q0(r_table_adj, Q0_weights), Q0_Trapezes(r_table_adj), Qd(r_table_adj,Q0_weights), Smoothness(r_table_adj), Entropy(r_table_adj), \
+                            deltaR(r_table, r_table_adj), deltaQ0S1(r_table, r_table_adj), RMSE(r_table, r_table_adj)]
         stop = time.time()
         
         print("Ellipsoid adjusting algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 2)))
@@ -230,15 +247,37 @@ def main():
 
         if saveData:
             if verbose:
-                print("Saving data to " + saveFolder + "/" + saveDataName)
+                print("Saving results data to " + saveFolder + "/" + saveDataName)
+                print("Saving ellipsoid coefficients to " + saveFolder + "/" + saveDataName + "_ellipsoidCoeffs")
             data.to_excel(os.path.join(saveFolder, folderPath.split('/')[-1] + '_' + saveDataName + '.xlsx'))
+
+            #store all the results in the same excel file in different sheets corresponding to the r-tables names
+            with pd.ExcelWriter(os.path.join(saveFolder, folderPath.split('/')[-1] + '_' + saveDataName + '_adjustedTables.xlsx')) as writer:
+                for i, r_table in enumerate(results):
+                    dataF = pd.DataFrame(r_table)
+                    dataF = dataF.round(1)
+                    dataF.to_excel(writer, sheet_name=r_tables_names[i], header=False, index=False)
+
+            #save the ellipsoid coefficients
+            ellipsoidCoeffs = pd.DataFrame(ellipsoidCoeffs)
+            #add a column with the r-table names
+            ellipsoidCoeffs['r-table'] = r_tables_names
+            #move the r-table column to the front
+            cols = list(ellipsoidCoeffs.columns)
+            cols = [cols[-1]] + cols[:-1]
+            ellipsoidCoeffs = ellipsoidCoeffs[cols]
+            ellipsoidCoeffs.to_excel(os.path.join(saveFolder, folderPath.split('/')[-1] + '_' + saveDataName + '_ellipsoidCoeffs.xlsx'))
+
+            #save a txt file with the command line arguments
+            with open(os.path.join(saveFolder, folderPath.split('/')[-1] + '_' + saveDataName + '_commandLineArguments.txt'), 'w') as f:
+                f.write(' '.join(sys.argv[1:]))
 
     # ---------------------------------------------------------
     # ------------------ BETA GENETIC ALGORITHM ---------------
     # ---------------------------------------------------------
 
     if betaGeneticAlgorithm:
-        print("Beta genetic algorithm coming soon... (TM)")
+        print("Beta genetic algorithm coming soon... ")
 
     # ---------------------------------------------------------
     # ------------ PARTITIONING GENETIC ALGORITHM -------------

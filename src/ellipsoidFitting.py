@@ -56,6 +56,7 @@ def ellipsoidFitting(data, partition, beta, epsilon, freeConstant =False):
 
         #least squares solution
         v[index] = np.linalg.lstsq(DTD, DTnorms, rcond = None)[0]
+        
     return v
 
 

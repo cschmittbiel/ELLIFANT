@@ -1,6 +1,7 @@
 
 # ELLIFANT - An application for all your r-table ellipsoid fitting needs
 
+<img src="Logo.png" alt="ELLIFANT logo" width="110"/>
 
 **ELLIpsoid Fitting and Adjusting Numeric Tool**, or ELLIFANT, is a python application that allows users to adjust ellipsoids to their r-table measurements, and find the best fitting partitions for their data.
 
@@ -29,12 +30,14 @@ just type `pip install <package_name>` in your terminal once you have installed 
 
 ## Usage
 
+ELLIFANT is a command line application, so you will need to use your terminal to run it.
+
 Use `cd` to navigate to the directory where you have installed ELLIFANT, and down into the src folder.
 
 To run ELLIFANT, simply type `python3 ellifant.py` in your terminal. 
 For windows machines, you may need to type `py ellifant.py` instead.
 
-But most likely, this will return you an error message, as you need to specify what data you want it to run on and what you want it to do with it, adding the -help flag will show you the different options you have, but I will go through them here as well.
+But most likely, this will return you an error message, as you need to specify what data you want it to run on and what you want it to do with it, adding the -help flag will show you the different options you have, but here is a quick rundown of the arguments you can use.
 
 You can put all command line arguments in any order you like, some values will return errors, but the order of the arguments themselves does not matter.
 
@@ -53,6 +56,24 @@ The app has 2 main functions, fitting ellipses and searching for the best fittin
 - -pga | --partitionGeneticAlgorithm : Searches for the best fitting partition of the whole r-table for the provided data using a genetic algorithm
 
 You must specify one and only one of these functions per command line call.
+
+#### Boolean arguments (no value needed, typing them will set them to True)
+
+<span style="color:red">Do not forget the -sd argument if you want to save your results !</span> 
+
+- -sd | --saveData : Saves the results of your computations in different formats depending on what you requested, the files will be saved in the results folder of the application (or the folder you specified with the -sf argument).
+
+- -si | --saveImages : Saves the images you want according to the plotTypes and styles you requested, the images will be saved in the images folder of the application.
+
+- -sh | --showImages : Shows the matplotlib plots as they are computed, this is useful if you want to see the plots but do not want to save them, this is compatible with the saveImages argument.
+
+- -fc | -- freeConstant : This is a boolean to determine weather or not you want to use the free constant in the ellipsoid fitting algorithm, it is false if you don't specify it.
+
+- -ct | --coloredOriginalTable : This is a boolean to determine weather or not you want to color the original r-table according to the partition you use, it is false if you don't specify it. This is useful if you want to see how the partition you are using affects the r-table.
+
+- -cz | --conserveZeros : If you want to keep the historical zeros of r-tables in the results of your computations, you can use this argument, it is false if you don't specify it. This of course brings down the error of the ellipsoid fitting.
+
+- -v | --verbose : makes the application print more information about what it is doing, this is useful if you want to see the progress of the computations, but it can be a bit overwhelming if you are running a lot of files.
 
 ## More command line arguments
 
@@ -79,20 +100,6 @@ road surfaces.
 
 - -pt | plotTypes : This controls what you want to plot: `-pt o` will plot the original r-table, `-pt r` will plot the resulting r-table after the fitting of ellipsoids, and `-pt c` will plot a comparison between the original and resulting r-tables. You can combine these arguments, for example, `-pt or` will work just as you would expect it to.
  
-#### Boolean arguments (no value needed, typing them will set them to True)
-
-<span style="color:red">Do not forget the -sd argument if you want to save your results !</span> 
-
-- -sd | --saveData : Saves the results of your computations in different formats depending on what you requested, the files will be saved in the results folder of the application (or the folder you specified with the -sf argument).
-
-- -si | --saveImages : Saves the images you want according to the plotTypes and styles you requested, the images will be saved in the images folder of the application.
-
-- -sh | --showImages : Shows the matplotlib plots as they are computed, this is useful if you want to see the plots but do not want to save them, this is compatible with the saveImages argument.
-
-- -fc | -- freeConstant : This is a boolean to determine weather or not you want to use the free constant in the ellipsoid fitting algorithm, it is false if you don't specify it.
-
-- -v | --verbose : makes the application print more information about what it is doing, this is useful if you want to see the progress of the computations, but it can be a bit overwhelming if you are running a lot of files.
-
 ## Examples
 
 - To see your favourite r-table in 3D, just type `python3 ellifant.py -ea -fp <path_to_your_file> -p <your_excel_file> -s <your sheet> -pt o -ps 3D -sh` in your terminal.

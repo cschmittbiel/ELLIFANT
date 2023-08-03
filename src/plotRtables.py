@@ -5,7 +5,7 @@ import sys
 # I love colors
 colors = ['red', 'green', 'blue', 'yellow', 'orange', 'purple', 'pink', 'brown', 'black', 'grey']
 
-def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', savPath='../images/', store=False, show=True, verbose=False):
+def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', savPath='../images/', store=False, show=True, coloredOT=True,verbose=False):
     
     # Ensure to write in big letters in the plot
     plt.rcParams['axes.labelsize'] = 20
@@ -43,7 +43,10 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataApp[partition==i], color=colors[i-1])
+            if coloredOT:
+                plt.scatter(dataAbs[partition==i], dataApp[partition==i], color=colors[i-1])
+            else:
+                plt.scatter(dataAbs[partition==i], dataApp[partition==i], color='black')
 
     elif style == '2D_top':
         plt.title('2D top view of the photometric solid of '+ name)
@@ -58,8 +61,12 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color='black') #colors[i-1])
-            plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color='black') #colors[i-1])
+            if coloredOT:
+                plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color=colors[i-1])
+                plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color=colors[i-1])
+            else:
+                plt.scatter(dataAbs[partition==i], dataOrd[partition==i], color='black')
+                plt.scatter(dataAbs[partition==i], -dataOrd[partition==i], color='black')
 
     elif style == '3D':
         plt.title('3D view of the photometric solid of '+ name)
@@ -78,8 +85,12 @@ def plotRtable(data, partition, beta, epsilon, style='2D_side', name='r-table', 
 
         #plot the dots with the right colors (in partitions)
         for i in range(10):
-            ax.scatter(dataAbs[partition==i], dataOrd[partition==i], dataApp[partition==i], color=colors[i-1])
-            ax.scatter(dataAbs[partition==i], -dataOrd[partition==i], dataApp[partition==i], color=colors[i-1])
+            if coloredOT:
+                ax.scatter(dataAbs[partition==i], dataOrd[partition==i], dataApp[partition==i], color=colors[i-1])
+                ax.scatter(dataAbs[partition==i], -dataOrd[partition==i], dataApp[partition==i], color=colors[i-1])
+            else:
+                ax.scatter(dataAbs[partition==i], dataOrd[partition==i], dataApp[partition==i], color='black')
+                ax.scatter(dataAbs[partition==i], -dataOrd[partition==i], dataApp[partition==i], color='black')
 
     elif style.startswith("q"):
         plt.close()

@@ -63,6 +63,8 @@ class CommandLineArgs:
         parser.add_argument('-fc',"--freeConstant", required=False, action='store_true', help="If this argument is given, the program add a constant term to the ellipses to better fit the data, very useful for r-tables of wet surfaces")
         parser.add_argument('-g',"--genetics", required=False, type=str, default="3,5,30", help="The parameters for the genetic algorithm, number of ellipsoids, number of generations, population size, default is 3,10,10")
         parser.add_argument('-pa',"--partition", required=False, type=str, default='none', help="The partition to use for the partitioning genetic algorithm, default is parts,bestDry3")
+        parser.add_argument('-ct',"--coloredOriginalTables", required=False, action='store_true', help="If this argument is given, the original tables will be colored according to the ellipsoids they are in")
+        parser.add_argument('-cz',"--conserveZeros", required=False, action='store_true', help="If this argument is given, the program will keep the zeros in the original tables")
 
         parser.add_argument('-v',"--verbose", required=False, action='store_true', help="If this argument is given, the program will print more information")
 
@@ -90,6 +92,8 @@ class CommandLineArgs:
         self.freeConstant = self.args.freeConstant
         self.genetics = self.args.genetics
         self.partition = self.args.partition
+        self.coloredOriginalTables = self.args.coloredOriginalTables
+        self.conserveZeros = self.args.conserveZeros
 
         self.verbose = self.args.verbose
 

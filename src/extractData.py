@@ -89,21 +89,37 @@ def deltaR(original_Rtable, adjusted_Rtable):
 def Entropy(r_table):
     """
     This function calculates the entropy of the R-table
+    which is relevant, because the entropy is a measure of the
+    uniformity of the R-table the smaller the entropy, the more
+    compressable the R-table is.
     """
 
-    # we calculate the entropy
-    entropy = -np.sum(r_table * np.log(r_table), axis = 0)
-    entropy = np.sum(entropy, axis = 0)
+    #carefull r-tables have 0 in them, so we need to add a small value to avoid log(0)
+    #convert r-table to float 
+    r_table = r_table.astype(float)
+    r_table += 1e-10
+
+    #flatten the r-table
+    r_table = r_table.flatten()
+
+    #calculate the probability of each element by dividing the count of each individual value by the total number of elements
+    values, counts = np.unique(r_table, return_counts=True)
+    probabilities = counts / len(r_table)
+    entropy = -np.sum(probabilities * np.log2(probabilities))
 
     return entropy
 
 def Smoothness(r_table):
     """
-    This function calculates the smoothness of the R-table
+    This function calculates a smoothness of the R-table
     """
 
     # we calculate the smoothness
     smoothness = np.sum(np.abs(r_table[1:,:] - r_table[:-1,:]), axis = 0)
     smoothness = np.sum(smoothness, axis = 0)
+
+    # normalize the smoothness
+    smoothness /= np.sum(np.sum(r_table, axis = 0), axis = 0)
+    smoothness /= r_table.shape[0] - 1
 
     return smoothness
