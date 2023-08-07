@@ -27,6 +27,31 @@ def stopsToPartition(stops):
     partition[:,19] = c-1
     return partition
 
+def partitionToStops(partition):
+    #convert the partition to stops by looking at the first line of the partition
+    stops = np.zeros(len(np.unique(partition[0,:]))+1)
+    #if two consecutive values are different, we have a stop that is beta[i]
+    c=0
+    for i in range(20):
+        if partition[0,i] != partition[0,i-1]:
+            stops[c] = beta[i-1]
+            c += 1
+    stops[c] = 180
+    stops[0] = 0
+    return stops
+
+def randomStops(n=3, print = False):
+    #generate n-1 distinct values of the beta vector to be used as stops
+    stops = np.zeros(n)
+    for i in range(n):
+        stops[i] = np.random.randint(0,180)
+        while np.any(stops[i] == stops[:i]):
+            stops[i] = np.random.randint(0,180)
+    stops = np.sort(stops)
+    stops[0] = 0
+    stops = np.append(stops, 180)
+    return stopsToPartition(stops)
+
 #Four way flood fill algorithm + rolling average
 def randomPartition(n=3, show=False):
     partition = np.zeros((29,20))

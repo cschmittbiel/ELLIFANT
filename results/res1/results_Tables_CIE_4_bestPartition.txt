@@ -1,1 +1,0 @@
-Tables_CIEBest MRMSE for4ellipsoids: 69.2366096744082

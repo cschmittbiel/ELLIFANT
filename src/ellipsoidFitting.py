@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 def ellipsoidFitting(data, partition, beta, epsilon, freeConstant =False):
 

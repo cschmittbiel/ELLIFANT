@@ -1,1 +1,0 @@
-SURFACEBest MRMSE for4ellipsoids: 15.628648160869659

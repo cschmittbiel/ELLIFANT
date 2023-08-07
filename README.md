@@ -1,24 +1,23 @@
 
-# ELLIFANT - An application for all your r-table ellipsoid fitting needs
+# ELLIFANT documentation - An application for all your r-table ellipsoid fitting needs
 
 <img src="Logo.png" alt="ELLIFANT logo" width="110"/>
 
 **ELLIpsoid Fitting and Adjusting Numeric Tool**, or ELLIFANT, is a python application that allows users to adjust ellipsoids to their r-table measurements, and find the best fitting partitions for their data.
 
-For this guide, basic understanding of what an r-table is and how it is used is assumed. For more information on r-tables, please refer to (fill in later).
+For this guide, basic understanding of what an r-table is and how it is used is assumed. For more information on r-tables, please refer to the CIE 144 standard document, which can be found on the [CIE website](https://cie.co.at/publications/cie-1442001-practical-methods-construction-colour-appearance-tables-rgb-cmyk-and-cie).
 
 We also assume good knowledge of the 2020 paper by Ana Ogando-Martinez *et al.* , which describes the ellipsoid fitting algorithm that serves as a basis for this application.
 
 ## Installation
 
 To install ELLIFANT, simply clone the repository and put it in a directory of your choice.
-You will need to have Python 3.7 or higher installed on your machine, and use pip or conda to install the following packages:
+You will need to have Python 3.11 or higher installed on your machine, and use pip or conda to install the following packages:
 
 - numpy
 - pandas 
 - matplotlib
 - argparse
-- multiprocessing
 
 Further instructions on how to install these packages can be found on their respective websites:
 
@@ -91,7 +90,7 @@ You must specify one and only one of these functions per command line call.
 
 - -sdn | --saveDataName : This is the name of the file where the results of your computations will be saved, it defaults to `results`.
 
-- -pa | --partition : This describes how you want to partition your data, it defaults to `0,15,60,180` just like in the paper, but you can specify a different partition if you want to, for example, `-pa 0,10,90,180` is known to be the optimal partition for r-tables on dry 
+- -pa | --partition : This describes how you want to partition your data, it defaults to `0,15,60,180` just like in the paper, but you can specify a different partition if you want to, for example, `-pa 0,15,90,180` is known to be the optimal partition for r-tables on dry 
 road surfaces.
 
 - -g | --genetic : This is a vector of three values that controls the genetic algorithm, the first value is the number of ellipses you want to fit to the r-table, the second value is the number of generations one individual has to win in a row to be considered the best (the genetic algorithm always terminate at 10,000 generations), and the third value is the number of individuals you want to have in your population, it defaults to `3,5,30` as to not use up too many ressources, but to get satisfying results, you should use at least `n,20,100` for any n.
@@ -99,7 +98,15 @@ road surfaces.
 - -ps | --plotStyle : This is the style of plot you want to save or show with matplotlib, it defaults to a 2d side view plot, but you can specify a different style if you want to, for example, `-ps 2D_top` will plot the photometric solids from the top, and `-ps 3D` will plot the photometric solids in 3D. Additionally, adding `q` before the style will plot the photometric solids for the corresponding q table instead of the r table, for example, `-ps q2D_side` will plot the standard 2D side view plot for the q table.
 
 - -pt | plotTypes : This controls what you want to plot: `-pt o` will plot the original r-table, `-pt r` will plot the resulting r-table after the fitting of ellipsoids, and `-pt c` will plot a comparison between the original and resulting r-tables. You can combine these arguments, for example, `-pt or` will work just as you would expect it to.
- 
+
+## Outputs
+
+Any and all outputs of the application will be saved in the results folder of the application, or the folder you specified with the -sf argument.
+
+- The results of the ellipsoid fitting will be saved in three excel files, one with the parameter calculations of the ellipsoids, one with the results of the fitting, and one with the parameters of the ellipsoids. A txt file with the command line arguments will also be saved, to keep track of what you did.
+
+- The results of the genetic algorithm will be saved in an excel file, with the best individual of the algorithm, a png format image of the best individual, and a txt file with the time it took to run the algorithm.
+
 ## Examples
 
 - To see your favourite r-table in 3D, just type `python3 ellifant.py -ea -fp <path_to_your_file> -p <your_excel_file> -s <your sheet> -pt o -ps 3D -sh` in your terminal.
@@ -107,3 +114,5 @@ road surfaces.
 - To see the results of the ellipsoid adjusting on your r-table in 2D from the top, just type : `python3 ellifant.py -ea -fp <path_to_your_file> -p <your_excel_file> -s <your sheet> -pt r -ps 2D_top -sh` in your terminal.
 
 - To look for the best partition to sum up the r-tables from your database, just type : `python3 ellifant.py -pga -fp <path_to_your_directory> -g 3,5,30 -sd -si` in your terminal.
+
+- To test on five ellipsoids with the best models and zero padding, `py ellifant.py -ea -cz -fp DryAll -p *.xlsx -pa part/Dry.xlsx -sd` This is what we recommend to do for the best results.

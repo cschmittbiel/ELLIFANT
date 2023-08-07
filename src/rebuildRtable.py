@@ -30,9 +30,6 @@ def rebuildRtable(v, partition, beta, epsilon, rollAverages = True, request = 'n
 
     for i ,j in np.ndindex(data.shape):
         group = int(partition[i,j])-1
-
-        #I still don't know why or how or what, but this fixes the problem
-        #I will try to figure it out later
         
         A = a[group]*(np.sin(epsilon[i])**2)*(np.cos(betaRad[j])**2) + b[group]*(np.sin(epsilon[i])**2)*(np.sin(betaRad[j])**2) + c[group]*(np.cos(epsilon[i])**2) + g[group]*np.sin(epsilon[i])*np.cos(epsilon[i])*np.cos(betaRad[j])
 

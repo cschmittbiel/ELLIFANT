@@ -9,9 +9,10 @@ import os
 from ellipsoidFitting import ellipsoidFitting
 from rebuildRtable import rebuildRtable
 from commandArgParser import CommandLineArgs, checkCommandLineArguments
-from partition import loadPartition, stopsToPartition
+from partition import loadPartition, stopsToPartition, partitionToStops
 from plotRtables import plotRtable, plotRtableCompare
 from partitionGenetic import fitPartitionGenetic
+from betaGenetic import fitBetaGenetic
 
 from extractData import S1
 from extractData import Q0
@@ -277,7 +278,18 @@ def main():
     # ---------------------------------------------------------
 
     if betaGeneticAlgorithm:
-        print("Beta genetic algorithm coming soon... ")
+        start = time.time()
+        bestBeta, smallestMRMSE = fitBetaGenetic(r_tables, beta, epsilon, nEll=genetics[0], nMaxGen=genetics[1], nIndiv=genetics[2], verbose=verbose)
+        stop = time.time()
+        if verbose:
+            print("Beta genetic algorithm for %s r-tables took %s seconds" % (len(r_tables), round(stop-start, 4)))
+
+        print("Best beta partition: " + str(partitionToStops(bestBeta)))
+        print("With a Mean deltaR (MDR) of " + str(smallestMRMSE))
+
+        with open(os.path.join(saveFolder, saveDataName + '_' + folderPath.split('/')[-1] + '_bestBeta.txt'), 'a') as f:
+            f.write(str(folderPath.split('/')[-1]) + ': Best beta partition for ' + str(genetics[0]) + ' ellipsoids: ' + str(partitionToStops(bestBeta)) + '\n'\
+                    + '(Took ' + str(round(stop-start, 4)) + ' seconds)\n')
 
     # ---------------------------------------------------------
     # ------------ PARTITIONING GENETIC ALGORITHM -------------

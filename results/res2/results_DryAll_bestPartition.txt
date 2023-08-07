@@ -1,2 +1,0 @@
-DryAll: Best deltaR for 3 ellipsoids: 0.27815061212964826
-DryAll: Best deltaR for 4 ellipsoids: 0.2643870140417387

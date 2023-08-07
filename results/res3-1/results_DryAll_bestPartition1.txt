@@ -1,2 +1,0 @@
-DryAll: Best deltaR for 3 ellipsoids: 0.24524221407596572
-(Took 19h 58m 6.11s)

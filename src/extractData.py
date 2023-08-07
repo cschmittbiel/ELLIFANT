@@ -1,7 +1,4 @@
 import numpy as np
-import pandas as pd
-
-from tps import ThinPlateSpline
 
 #This script contains the functions to extract the standard coefficients from the R-table S1, Q0 and Qd
 beta = np.array([0, 2, 5, 10, 15, 20, 25, 30, 35, 40, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180])
